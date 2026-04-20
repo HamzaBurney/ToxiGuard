@@ -2,11 +2,96 @@
 
 ---
 
+## Detailed Project Description
+
+ToxiGuard is an applied machine learning project that investigates a core challenge in content moderation: building a toxicity classifier that is both effective and fair across identity groups while remaining robust against simple adversarial attacks.
+
+The project uses the Jigsaw Unintended Bias in Toxicity Classification dataset and walks through a complete lifecycle:
+
+1. Train a strong baseline toxicity classifier.
+2. Audit that classifier for measurable group-level disparities.
+3. Stress-test the model with realistic adversarial manipulations.
+4. Apply and compare mitigation strategies that reduce bias while preserving utility.
+5. Deploy the best model inside a practical three-layer guardrail pipeline suitable for production moderation workflows.
+
+### Problem Context
+
+Online moderation systems often optimize aggregate accuracy and overlook distributional harms. In practice, this can lead to uneven error rates between groups (for example, higher false positive rates on comments associated with some identities). A useful moderation model must therefore satisfy multiple objectives at once:
+
+- maintain strong classification quality on imbalanced toxicity data,
+- reduce harmful fairness gaps between cohorts,
+- remain resilient to straightforward evasion attempts,
+- expose uncertain cases to human reviewers instead of over-automating risky decisions.
+
+ToxiGuard is designed to make these trade-offs explicit, measurable, and reproducible.
+
+### Project Objectives
+
+The project is built around five concrete objectives:
+
+1. **Baseline performance:** Fine-tune DistilBERT for toxic vs non-toxic classification and select an operating threshold suitable for skewed label distributions.
+2. **Bias measurement:** Quantify fairness gaps between a high-black identity cohort and a reference cohort using confusion-matrix-derived rates and AIF360 fairness metrics.
+3. **Robustness analysis:** Demonstrate model degradation under character-level evasion and label-flipping poisoning attacks.
+4. **Bias mitigation:** Compare pre-processing, post-processing, and data-level mitigation techniques under a common evaluation protocol.
+5. **Deployment readiness:** Integrate the best mitigated model into a layered safety pipeline with calibration and human-in-the-loop escalation.
+
+### End-to-End Methodology
+
+The repository is intentionally structured as a stepwise experimental report.
+
+- **Part 1 (Baseline):** DistilBERT is trained on stratified subsets, then evaluated with standard classification metrics and threshold analysis.
+- **Part 2 (Audit):** Fairness diagnostics compare group-specific TPR/FPR/FNR and compute Statistical Parity Difference and Equal Opportunity Difference.
+- **Part 3 (Adversarial):** Character perturbations and poisoning show where the classifier can be manipulated or degraded.
+- **Part 4 (Mitigation):** Reweighing, threshold optimization, and oversampling are implemented and compared; the best balanced model is selected and saved.
+- **Part 5 (Guardrail Pipeline):** A production-style moderation stack combines a regex safety filter, calibrated neural model, and human review queue for uncertain predictions.
+
+### Guardrail Architecture
+
+The final moderation design emphasizes layered risk control:
+
+1. **Layer 1 — Input filter:** Fast regex-based blocking for severe or policy-critical patterns.
+2. **Layer 2 — Calibrated model:** DistilBERT probability output is calibrated so confidence values can be operationally interpreted.
+3. **Layer 3 — Human review:** Predictions in an uncertainty band are escalated to moderators.
+
+This architecture reduces the chance that a single model output decides all outcomes, especially for borderline content.
+
+### Key Outputs and Deliverables
+
+By running the notebooks in order, the project produces:
+
+- reproducible training/evaluation subsets,
+- baseline and mitigated model artifacts,
+- fairness and robustness analysis plots,
+- threshold sensitivity analysis for review-queue design,
+- an importable `ModerationPipeline` module for local inference.
+
+### Practical Value
+
+ToxiGuard is useful as both a learning resource and a prototype for real moderation systems. It demonstrates how to go beyond raw accuracy and build moderation that is:
+
+- evidence-driven (metrics and diagnostics at each stage),
+- fairness-aware (explicit cohort analysis and mitigation),
+- robust-minded (adversarial stress testing),
+- operations-ready (calibration plus human escalation).
+
+### Scope and Limitations
+
+This repository is an educational and experimental implementation, not a complete production service. It does not include:
+
+- a live API or streaming moderation backend,
+- persistent review tooling or annotator workflow UI,
+- full policy taxonomy coverage for all abuse categories,
+- continuous monitoring infrastructure for drift and fairness regression.
+
+However, it provides a strong and extensible baseline for those production extensions.
+
+---
+
 ## Environment
 
 | Item | Detail |
 |---|---|
-| Python | 3.10.x |
+| Python | 3.11.x |
 | GPU | NVIDIA T4 (Google Colab free tier) or local CUDA GPU |
 | CUDA | 12.1 |
 | Framework | HuggingFace Transformers 4.39.3, PyTorch 2.2.1 |
