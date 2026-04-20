@@ -1,5 +1,6 @@
 # Dataset files (too large for GitHub)
 *.csv
+*.png
 
 # Model checkpoints
 *.pt

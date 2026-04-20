@@ -1,5 +1,4 @@
-# FAST-NUCES Assignment 2 — Responsible & Explainable AI
-## Auditing Content Moderation AI for Bias, Adversarial Robustness & Safety
+# ToxiGuard: Auditing & Mitigating Bias in Content Moderation AI
 
 ---
 

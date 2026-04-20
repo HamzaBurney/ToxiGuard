@@ -17,6 +17,7 @@ import unicodedata
 import numpy as np
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import inspect
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.base import BaseEstimator, ClassifierMixin
 
@@ -25,6 +26,14 @@ try:
     from sklearn.frozen import FrozenEstimator
 except Exception:
     FrozenEstimator = None
+
+
+def _make_calibrator(estimator, method: str, cv):
+    """Build CalibratedClassifierCV across sklearn versions."""
+    params = inspect.signature(CalibratedClassifierCV.__init__).parameters
+    if "estimator" in params:
+        return CalibratedClassifierCV(estimator=estimator, method=method, cv=cv)
+    return CalibratedClassifierCV(base_estimator=estimator, method=method, cv=cv)
 
 
 # =============================================================================
@@ -223,13 +232,14 @@ def input_filter(text: str) -> dict | None:
 # SKLEARN WRAPPER FOR DISTILBERT (for CalibratedClassifierCV)
 # =============================================================================
 
-class DistilBERTWrapper(BaseEstimator, ClassifierMixin):
+class DistilBERTWrapper(ClassifierMixin, BaseEstimator):
     """
     Sklearn-compatible wrapper around DistilBERT so that
     CalibratedClassifierCV can calibrate its output probabilities.
     """
 
     def __init__(self, model_dir: str, device: str = "cpu"):
+        self._estimator_type = "classifier"
         self.model_dir = model_dir
         self.device = device
         self.tokenizer_ = None
@@ -320,16 +330,28 @@ class ModerationPipeline:
         """
         print(f"Calibrating on {len(texts)} examples...")
         if FrozenEstimator is not None:
-            self._calibrated = CalibratedClassifierCV(
+            # Preferred path on newer sklearn versions.
+            self._calibrated = _make_calibrator(
                 estimator=FrozenEstimator(self._base), method="isotonic", cv=None
             )
+            self._calibrated.fit(texts, labels)
+
+            # Some sklearn builds may mis-tag FrozenEstimator as non-classifier.
+            # Probe once and fall back to cv=5 when this happens.
+            try:
+                self._calibrated.predict_proba([_normalize_text(texts[0])])
+            except Exception:
+                self._calibrated = _make_calibrator(
+                    estimator=self._base, method="isotonic", cv=5
+                )
+                self._calibrated.fit(texts, labels)
         else:
             # Backward-compatible fallback for older scikit-learn versions.
-            self._calibrated = CalibratedClassifierCV(
+            self._calibrated = _make_calibrator(
                 estimator=self._base, method="isotonic", cv=5
             )
+            self._calibrated.fit(texts, labels)
 
-        self._calibrated.fit(texts, labels)
         print("Calibration complete.")
         return self
 
