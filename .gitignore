@@ -1,0 +1,28 @@
+# Dataset files (too large for GitHub)
+*.csv
+
+# Model checkpoints
+*.pt
+*.bin
+*.safetensors
+model_*/
+results_*/
+saved_model/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Logs
+logs/
+*.log
+
+# Environment
+venv/
+.env
+
+# OS
+.DS_Store
+Thumbs.db

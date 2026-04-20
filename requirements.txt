@@ -1,0 +1,22 @@
+# Python 3.10+
+# Core ML / NLP
+torch
+transformers
+datasets
+tokenizers
+
+# Fairness
+fairlearn
+aif360
+
+# ML utilities
+scikit-learn
+numpy
+pandas
+
+# Visualisation
+matplotlib
+seaborn
+
+# Misc
+scipy
